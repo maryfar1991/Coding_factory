@@ -1,4 +1,4 @@
-package com.jobfinder.jobportal.service.impl;
+package com.jobfinder.jobportal.service;
 
 import com.jobfinder.jobportal.entity.Company;
 import com.jobfinder.jobportal.repository.CompanyRepository;
