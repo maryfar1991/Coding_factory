@@ -1,13 +1,10 @@
 package com.jobfinder.jobportal.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "users")
 public class User {
 
     @Id
@@ -22,9 +19,10 @@ public class User {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    // Getters & Setters
+    // Getters & Setters ...
 
-    public Long getId() {
+
+public Long getId() {
         return id;
     }
 
