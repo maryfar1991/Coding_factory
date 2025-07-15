@@ -1,6 +1,8 @@
 package com.jobfinder.jobportal.service;
 
 import com.jobfinder.jobportal.payload.*;
+import com.jobfinder.jobportal.repository.UserRepository; // ✅ import UserRepository
+import com.jobfinder.jobportal.security.JwtTokenProvider; // ✅ import JwtTokenProvider
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

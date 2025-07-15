@@ -1,6 +1,7 @@
 package com.jobfinder.jobportal.controller;
 
 import com.jobfinder.jobportal.entity.User;
+import com.jobfinder.jobportal.security.JwtTokenProvider;
 import com.jobfinder.jobportal.payload.LoginRequest;
 import com.jobfinder.jobportal.payload.LoginResponse;
 import com.jobfinder.jobportal.payload.RegisterRequest;
@@ -28,13 +29,13 @@ public class UserController {
 
     @PostMapping("/auth/login")
     public LoginResponse login(@RequestBody LoginRequest request) {
-        User user = userService.findByEmail(request.getEmail());
-        if (user != null && user.getPassword().equals(request.getPassword())) {
-            // TODO: χρησιμοποιήσε PasswordEncoder στην παραγωγή
-            String token = jwtTokenProvider.generateToken(user.getEmail());
+        Optional<User> optionalUser = userService.findByEmail(request.getEmail());
+        if (optionalUser.isPresent() && optionalUser.get().getPassword().equals(request.getPassword())) {
+            String token = jwtTokenProvider.generateToken(optionalUser.get().getEmail());
             return new LoginResponse(token);
         }
         throw new RuntimeException("Invalid email or password");
+
     }
 
     @PostMapping("/auth/register")
