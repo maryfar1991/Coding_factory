@@ -1,5 +1,7 @@
 package com.jobfinder.jobportal.controller;
 
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import com.jobfinder.jobportal.entity.User;
 import com.jobfinder.jobportal.security.JwtTokenProvider;
 import com.jobfinder.jobportal.payload.LoginRequest;
@@ -38,7 +40,7 @@ public class UserController {
 
     }
 
-    @PostMapping("/auth/register")
+    /*@PostMapping("/auth/register")
     public String register(@RequestBody RegisterRequest request) {
         if (userService.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
@@ -49,7 +51,24 @@ public class UserController {
         newUser.setRole(request.getRole());
         userService.createUser(newUser);
         return "User registered successfully!";
+    } */
+
+
+    @PostMapping("/auth/register")
+    public String register(@RequestBody RegisterRequest request) {
+        if (userService.existsByEmail(request.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Το email υπάρχει ήδη");
+        }
+
+        User newUser = new User();
+        newUser.setEmail(request.getEmail());
+        newUser.setPassword(request.getPassword()); // TODO: κρυπτογράφησε κωδικό
+        newUser.setRole(request.getRole());
+
+        userService.createUser(newUser);
+        return "Ο χρήστης δημιουργήθηκε με επιτυχία!";
     }
+
 
     // ===============================
     // 👤 USER CRUD ENDPOINTS
