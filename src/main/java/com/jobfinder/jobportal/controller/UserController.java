@@ -40,35 +40,32 @@ public class UserController {
 
     }
 
-    /*@PostMapping("/auth/register")
-    public String register(@RequestBody RegisterRequest request) {
-        if (userService.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
-        }
-        User newUser = new User();
-        newUser.setEmail(request.getEmail());
-        newUser.setPassword(request.getPassword()); // TODO: encode password
-        newUser.setRole(request.getRole());
-        userService.createUser(newUser);
-        return "User registered successfully!";
-    } */
-
 
     @PostMapping("/auth/register")
     public String register(@RequestBody RegisterRequest request) {
+        System.out.println("Request received: " + request.getEmail());
+        // 🔎 Καταγραφή εισερχόμενων πεδίων για debugging
+        System.out.println("📨 Email: " + request.getEmail());
+        System.out.println("📨 Password: " + request.getPassword());
+        System.out.println("📨 Role: " + request.getRole());
+
+        // ✅ Έλεγχος για διπλό email
         if (userService.existsByEmail(request.getEmail())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Το email υπάρχει ήδη");
         }
 
+        // 👤 Δημιουργία νέου χρήστη
         User newUser = new User();
         newUser.setEmail(request.getEmail());
-        newUser.setPassword(request.getPassword()); // TODO: κρυπτογράφησε κωδικό
-        newUser.setRole(request.getRole());
+        newUser.setPassword(request.getPassword()); // 💡 Πρόσθεσε PasswordEncoder για ασφάλεια
+        newUser.setRole(request.getRole() != null ? request.getRole() : "USER"); // default σε περίπτωση null
 
+        // 📦 Αποθήκευση
         userService.createUser(newUser);
+
+        // 🎉 Επιτυχές μήνυμα
         return "Ο χρήστης δημιουργήθηκε με επιτυχία!";
     }
-
 
     // ===============================
     // 👤 USER CRUD ENDPOINTS

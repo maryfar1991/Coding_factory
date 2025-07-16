@@ -8,8 +8,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -25,19 +28,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-        String token = getTokenFromRequest(request);
+        ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request);
+
+        String token = getTokenFromRequest(wrappedRequest);
 
         if (token != null && tokenProvider.validateToken(token)) {
             String email = tokenProvider.getEmailFromToken(token);
 
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(email, null, null); // authorities = null για απλό έλεγχο
+                    new UsernamePasswordAuthenticationToken(email, null, null);
 
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(wrappedRequest));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
-        filterChain.doFilter(request, response);
+        // 🔎 Log JSON Body if it's a POST and Content-Type is application/json
+        if ("POST".equalsIgnoreCase(wrappedRequest.getMethod()) &&
+                "application/json".equalsIgnoreCase(wrappedRequest.getContentType())) {
+
+            byte[] buf = wrappedRequest.getContentAsByteArray();
+            String body = new String(buf, StandardCharsets.UTF_8);
+            System.out.println("📦 JSON Payload: " + body);
+        }
+
+        filterChain.doFilter(wrappedRequest, response);
     }
 
     private String getTokenFromRequest(HttpServletRequest request) {
@@ -48,4 +62,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 }
+
 

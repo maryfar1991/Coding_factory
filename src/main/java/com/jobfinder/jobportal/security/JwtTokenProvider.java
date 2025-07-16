@@ -1,46 +1,59 @@
 package com.jobfinder.jobportal.security;
 
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
 
-    private final String JWT_SECRET = "secret_key"; // Άλλαξέ το σε ισχυρό key στην παραγωγή
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    @PostConstruct
+    public void init() {
+        secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
+
     private final long JWT_EXPIRATION_MS = 86400000; // 1 μέρα
+    private SecretKey secretKey;
+
 
     public String generateToken(String email) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + JWT_EXPIRATION_MS);
 
         return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(SignatureAlgorithm.HS512, JWT_SECRET)
+                .subject(email)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(secretKey, Jwts.SIG.HS512)
                 .compact();
     }
 
-
     public String getEmailFromToken(String token) {
-        JwtParser parser = Jwts.parserBuilder()
-                .setSigningKey(JWT_SECRET.getBytes()) // Χρησιμοποίησε byte array
+        JwtParser parser = Jwts.parser()
+                .verifyWith(secretKey)
                 .build();
 
         return parser
-                .parseClaimsJws(token)
-                .getBody()
+                .parseSignedClaims(token)
+                .getPayload()
                 .getSubject();
     }
 
-
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(JWT_SECRET).parseClaimsJws(token);
+            Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token);
             return true;
         } catch (ExpiredJwtException e) {
             System.out.println("Token expired");
@@ -56,5 +69,6 @@ public class JwtTokenProvider {
         return false;
     }
 }
+
 
 
