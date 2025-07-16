@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/auth")
 public class UserController {
 
     private final UserService userService;
@@ -29,7 +29,7 @@ public class UserController {
     // 🔐 AUTH ENDPOINTS
     // ===============================
 
-    @PostMapping("/auth/login")
+    @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest request) {
         Optional<User> optionalUser = userService.findByEmail(request.getEmail());
         if (optionalUser.isPresent() && optionalUser.get().getPassword().equals(request.getPassword())) {
@@ -41,7 +41,7 @@ public class UserController {
     }
 
 
-    @PostMapping("/auth/register")
+    @PostMapping("/register")
     public String register(@RequestBody RegisterRequest request) {
         System.out.println("Request received: " + request.getEmail());
         // 🔎 Καταγραφή εισερχόμενων πεδίων για debugging
