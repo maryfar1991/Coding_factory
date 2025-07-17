@@ -1,5 +1,7 @@
 package com.jobfinder.jobportal.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import com.jobfinder.jobportal.entity.User;
@@ -20,24 +22,39 @@ public class UserController {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public UserController(UserService userService, JwtTokenProvider jwtTokenProvider) {
+    //public UserController(UserService userService, JwtTokenProvider jwtTokenProvider) {
+    //    this.userService = userService;
+    //   this.jwtTokenProvider = jwtTokenProvider;
+    //}
+    public UserController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordEncoder passwordEncoder) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.passwordEncoder = passwordEncoder;
     }
+
 
     // ===============================
     // 🔐 AUTH ENDPOINTS
     // ===============================
 
-    @PostMapping("/login")
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    //@PostMapping("/login")
+    @PostMapping(value = "/login", produces = "application/json")
     public LoginResponse login(@RequestBody LoginRequest request) {
         Optional<User> optionalUser = userService.findByEmail(request.getEmail());
-        if (optionalUser.isPresent() && optionalUser.get().getPassword().equals(request.getPassword())) {
-            String token = jwtTokenProvider.generateToken(optionalUser.get().getEmail());
-            return new LoginResponse(token);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            System.out.println("🔍 Input password: " + request.getPassword());
+            System.out.println("🔍 Stored hash: " + user.getPassword());
+            System.out.println("✅ Password matches? " + passwordEncoder.matches(request.getPassword(), user.getPassword()));
+            if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                String token = jwtTokenProvider.generateToken(user.getEmail());
+                return new LoginResponse(token);
+            }
         }
         throw new RuntimeException("Invalid email or password");
-
     }
 
 
@@ -57,14 +74,18 @@ public class UserController {
         // 👤 Δημιουργία νέου χρήστη
         User newUser = new User();
         newUser.setEmail(request.getEmail());
-        newUser.setPassword(request.getPassword()); // 💡 Πρόσθεσε PasswordEncoder για ασφάλεια
+        //newUser.setPassword(request.getPassword()); // 💡 Πρόσθεσε PasswordEncoder για ασφάλεια
+        newUser.setPassword(passwordEncoder.encode(request.getPassword()));
         newUser.setRole(request.getRole() != null ? request.getRole() : "USER"); // default σε περίπτωση null
 
         // 📦 Αποθήκευση
         userService.createUser(newUser);
 
         // 🎉 Επιτυχές μήνυμα
+        System.out.println("🔐 Stored password: " + newUser.getPassword());
         return "Ο χρήστης δημιουργήθηκε με επιτυχία!";
+
+
     }
 
     // ===============================
