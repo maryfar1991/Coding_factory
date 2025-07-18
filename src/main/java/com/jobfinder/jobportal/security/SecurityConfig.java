@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -23,12 +24,12 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults())
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/auth/register", "/api/auth/login")
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                )
+                .csrf(AbstractHttpConfigurer::disable)
+                        //.ignoringRequestMatchers("/api/auth/register", "/api/auth/login")
+                        //.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+
                 .exceptionHandling(exception -> exception
-                        .accessDeniedHandler(csrfAccessDeniedHandler()) // 👈 εδω μπαίνει σωστά!
+                        .accessDeniedHandler(csrfAccessDeniedHandler())
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/csrf-token").permitAll()
