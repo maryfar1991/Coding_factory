@@ -22,10 +22,6 @@ public class UserController {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    //public UserController(UserService userService, JwtTokenProvider jwtTokenProvider) {
-    //    this.userService = userService;
-    //   this.jwtTokenProvider = jwtTokenProvider;
-    //}
     public UserController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordEncoder passwordEncoder) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
