@@ -36,7 +36,6 @@ public class UserController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    //@PostMapping("/login")
     @PostMapping(value = "/login", produces = "application/json")
     public LoginResponse login(@RequestBody LoginRequest request) {
         Optional<User> optionalUser = userService.findByEmail(request.getEmail());
@@ -47,11 +46,14 @@ public class UserController {
             System.out.println("✅ Password matches? " + passwordEncoder.matches(request.getPassword(), user.getPassword()));
             if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
                 String token = jwtTokenProvider.generateToken(user.getEmail());
-                return new LoginResponse(token);
+                String role = user.getRole(); // ✅ ορίζουμε το role από το χρήστη
+
+                return new LoginResponse(token, role); // ✅ επιστρέφουμε και τα δύο
             }
         }
         throw new RuntimeException("Invalid email or password");
     }
+
 
 
     @PostMapping("/register")
