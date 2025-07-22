@@ -6,20 +6,22 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.*;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider tokenProvider;
+    private final UserDetailsService userDetailsService;
 
-    public JwtAuthenticationFilter(JwtTokenProvider tokenProvider) {
+    public JwtAuthenticationFilter(JwtTokenProvider tokenProvider, UserDetailsService userDetailsService) {
         this.tokenProvider = tokenProvider;
+        this.userDetailsService = userDetailsService;
     }
 
     @Override
@@ -35,20 +37,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null && tokenProvider.validateToken(token)) {
             String email = tokenProvider.getEmailFromToken(token);
 
+            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(email, null, null);
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(wrappedRequest));
             SecurityContextHolder.getContext().setAuthentication(authentication);
-        }
-
-        // 🔎 Log JSON Body if it's a POST and Content-Type is application/json
-        if ("POST".equalsIgnoreCase(wrappedRequest.getMethod()) &&
-                "application/json".equalsIgnoreCase(wrappedRequest.getContentType())) {
-
-            byte[] buf = wrappedRequest.getContentAsByteArray();
-            String body = new String(buf, StandardCharsets.UTF_8);
-            System.out.println("📦 JSON Payload: " + body);
         }
 
         filterChain.doFilter(wrappedRequest, response);
@@ -62,5 +57,3 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 }
-
-
