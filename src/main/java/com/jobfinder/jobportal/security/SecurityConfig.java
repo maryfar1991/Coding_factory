@@ -3,6 +3,7 @@ package com.jobfinder.jobportal.security;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.lang.NonNull;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -39,14 +40,30 @@ public class SecurityConfig {
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(exception -> exception
-                        .accessDeniedHandler(csrfAccessDeniedHandler())
-                )
+                //.exceptionHandling(exception -> exception
+                        //.accessDeniedHandler(csrfAccessDeniedHandler())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/csrf-token").permitAll()
+
+                        // 🎯 Δημόσια προβολή αγγελιιών για όλους
+                        .requestMatchers(HttpMethod.GET, "/api/jobs/**").permitAll()
+
+                        // ✅ Υποβολή αίτησης από APPLICANT
+                        .requestMatchers(HttpMethod.POST, "/api/applications/apply/**").hasAuthority("APPLICANT")
+                        .requestMatchers(HttpMethod.GET, "/api/applications/me").hasAuthority("APPLICANT")
+
+                        // ✅ Προβολή και χειρισμός αιτήσεων από COMPANY
+                        .requestMatchers(HttpMethod.GET, "/api/applications/job/*").hasAuthority("COMPANY")
+                        .requestMatchers(HttpMethod.PUT, "/api/applications/*/approve").hasAuthority("COMPANY")
+                        .requestMatchers(HttpMethod.DELETE, "/api/applications/*/reject").hasAuthority("COMPANY")
+
+                        // 🛠️ Διαχείριση από εταιρίες
                         .requestMatchers("/api/company/**").hasAuthority("COMPANY")
+
+                        // 🔒 Υπόλοιπα endpoints προστατευμένα
                         .anyRequest().authenticated()
                 )
+
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); // ✅ Εδώ φορτώνεται το φίλτρο
 
         return http.build();
@@ -72,7 +89,7 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000")
+                        .allowedOriginPatterns("http://localhost:3000") // ✅ αντί για allowedOrigins("*")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
